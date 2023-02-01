@@ -44,11 +44,14 @@ contract auction {
 
     function bidderWithdrawal() public {
         require(bidderDeposits[msg.sender] > 0, "You have no deposited bids to withdraw!");
-
-        (bool tryToSend, /*Data*/) = msg.sender.call{value: bidderDeposits[msg.sender]}("");
+        
+        uint bidderDeposit = bidderDeposits[msg.sender];
+        bidderDeposits[msg.sender] = 0;
+        (bool tryToSend, /*Data*/) = msg.sender.call{value: bidderDeposit}("");
         require(tryToSend, "Transaction failed.");
 
-        bidderDeposits[msg.sender] = 0;
+        // bidderDeposits[msg.sender] = 0;
+        // bidderDeposit = 0;
     }
 
     function win() onlySeller public {
