@@ -8,12 +8,20 @@ contract auction {
     uint public auctionEndTime;
     bool public isAuctionRunning;
     mapping(address => uint) public bidderDeposits;
+    bool public started = false;
 
     address public highestBidder;
     uint public highestBid;
 
     constructor() {
         seller = payable(msg.sender);
+    }
+
+    modifier noAttack() {
+        require(!started, "You can't loop!");
+        started = true;
+        _;
+        started = false;
     }
 
     modifier onlySeller() {
@@ -42,16 +50,14 @@ contract auction {
         highestBid = msg.value;
     }
 
-    function bidderWithdrawal() public {
+    function bidderWithdrawal() public noAttack {
         require(bidderDeposits[msg.sender] > 0, "You have no deposited bids to withdraw!");
         
-        uint bidderDeposit = bidderDeposits[msg.sender];
-        bidderDeposits[msg.sender] = 0;
-        (bool tryToSend, /*Data*/) = msg.sender.call{value: bidderDeposit}("");
-        require(tryToSend, "Transaction failed.");
-
+        // uint bidderDeposit = bidderDeposits[msg.sender];
         // bidderDeposits[msg.sender] = 0;
-        // bidderDeposit = 0;
+        (bool tryToSend, /*Data*/) = msg.sender.call{value: bidderDeposits[msg.sender]}("");
+        require(tryToSend, "Transaction failed.");
+        bidderDeposits[msg.sender] = 0;
     }
 
     function win() onlySeller public {
